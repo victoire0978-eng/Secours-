@@ -1,52 +1,52 @@
-@import url("https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap");
 @import "tailwindcss";
 
 :root {
-  --background: 228 24% 7%;
-  --foreground: 42 34% 96%;
-  --card: 228 22% 12%;
-  --card-foreground: 42 34% 96%;
-  --popover: 229 24% 11%;
-  --popover-foreground: 42 34% 96%;
-  --primary: 20 88% 67%;
-  --primary-foreground: 228 24% 7%;
-  --secondary: 231 22% 17%;
-  --secondary-foreground: 42 34% 96%;
-  --muted: 230 19% 16%;
-  --muted-foreground: 226 13% 66%;
-  --accent: 171 58% 68%;
-  --accent-foreground: 228 24% 7%;
-  --destructive: 3 72% 61%;
-  --destructive-foreground: 42 34% 96%;
-  --border: 230 17% 25%;
-  --input: 230 17% 25%;
-  --ring: 20 88% 67%;
-  --radius: 1rem;
-  --font-display: "Instrument Serif", Georgia, serif;
-  --font-body: "Plus Jakarta Sans", sans-serif;
+  --background: 240 18% 8%;
+  --foreground: 36 35% 94%;
+  --card: 240 17% 12%;
+  --card-foreground: 36 35% 94%;
+  --popover: 240 19% 11%;
+  --popover-foreground: 36 35% 94%;
+  --primary: 13 78% 61%;
+  --primary-foreground: 240 18% 8%;
+  --secondary: 246 21% 19%;
+  --secondary-foreground: 36 35% 94%;
+  --muted: 240 15% 17%;
+  --muted-foreground: 238 10% 62%;
+  --accent: 48 96% 68%;
+  --accent-foreground: 240 18% 8%;
+  --destructive: 2 72% 59%;
+  --destructive-foreground: 36 35% 94%;
+  --border: 240 14% 23%;
+  --input: 240 14% 23%;
+  --ring: 13 78% 61%;
+  --radius: 0.75rem;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-body: "DM Sans", sans-serif;
   --font-mono: "Space Mono", monospace;
 }
 
 .dark {
-  --background: 228 24% 7%;
-  --foreground: 42 34% 96%;
-  --card: 228 22% 12%;
-  --card-foreground: 42 34% 96%;
-  --popover: 229 24% 11%;
-  --popover-foreground: 42 34% 96%;
-  --primary: 20 88% 67%;
-  --primary-foreground: 228 24% 7%;
-  --secondary: 231 22% 17%;
-  --secondary-foreground: 42 34% 96%;
-  --muted: 230 19% 16%;
-  --muted-foreground: 226 13% 66%;
-  --accent: 171 58% 68%;
-  --accent-foreground: 228 24% 7%;
-  --destructive: 3 72% 61%;
-  --destructive-foreground: 42 34% 96%;
-  --border: 230 17% 25%;
-  --input: 230 17% 25%;
-  --ring: 20 88% 67%;
+  --background: 240 18% 8%;
+  --foreground: 36 35% 94%;
+  --card: 240 17% 12%;
+  --card-foreground: 36 35% 94%;
+  --popover: 240 19% 11%;
+  --popover-foreground: 36 35% 94%;
+  --primary: 13 78% 61%;
+  --primary-foreground: 240 18% 8%;
+  --secondary: 246 21% 19%;
+  --secondary-foreground: 36 35% 94%;
+  --muted: 240 15% 17%;
+  --muted-foreground: 238 10% 62%;
+  --accent: 48 96% 68%;
+  --accent-foreground: 240 18% 8%;
+  --destructive: 2 72% 59%;
+  --destructive-foreground: 36 35% 94%;
+  --border: 240 14% 23%;
+  --input: 240 14% 23%;
+  --ring: 13 78% 61%;
 }
 
 @layer base {
@@ -153,344 +153,6 @@
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--primary) / 0.72);
-}
-
-/* NLSbox visual system — an editorial streaming lounge rather than a utility grid. */
-:root {
-  --nls-ink: 228 24% 7%;
-  --nls-ink-soft: 229 22% 10%;
-  --nls-line: 230 17% 25%;
-  --nls-coral: 20 88% 67%;
-  --nls-mint: 171 58% 68%;
-  --nls-shadow: 228 45% 3%;
-}
-
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 70;
-  opacity: 0.035;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.86' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.45'/%3E%3C/svg%3E");
-}
-
-.nls-app-shell {
-  background:
-    radial-gradient(ellipse at 88% -5%, hsl(var(--nls-coral) / 0.12), transparent 30rem),
-    radial-gradient(ellipse at 4% 32%, hsl(var(--nls-mint) / 0.07), transparent 34rem),
-    hsl(var(--background));
-}
-
-.nls-header {
-  background: hsl(var(--nls-ink) / 0.78) !important;
-  border-bottom-color: hsl(var(--foreground) / 0.08) !important;
-  box-shadow: 0 14px 36px hsl(var(--nls-shadow) / 0.2);
-}
-
-.nls-header > div {
-  max-width: 1180px;
-  min-height: 3.55rem;
-}
-
-.nls-header [data-testid="button-brand"] {
-  letter-spacing: -0.03em;
-}
-
-.nls-header [data-testid="button-brand"] > div:first-child {
-  background: hsl(var(--nls-coral)) !important;
-  box-shadow: 0 8px 24px hsl(var(--nls-coral) / 0.18) !important;
-  border-radius: 0.62rem;
-}
-
-.nls-header [data-testid="button-brand"] > span {
-  font-family: var(--font-display);
-  font-size: 1.35rem;
-  letter-spacing: -0.02em;
-}
-
-.nls-header button:focus-visible,
-.nls-bottom-nav button:focus-visible,
-.nls-home-screen button:focus-visible,
-.nls-home-screen input:focus-visible,
-.nls-settings-screen button:focus-visible,
-.nls-auth-panel button:focus-visible,
-.nls-auth-panel input:focus-visible {
-  outline: 2px solid hsl(var(--nls-mint));
-  outline-offset: 3px;
-}
-
-.nls-home-screen {
-  padding-top: 0.25rem;
-}
-
-.nls-hub-selector {
-  padding-top: 0.8rem !important;
-  padding-bottom: 0.55rem !important;
-}
-
-.nls-hub-selector > div {
-  gap: 0.55rem !important;
-  padding: 0.2rem 0.1rem !important;
-}
-
-.nls-hub-selector button {
-  min-height: 2.55rem;
-  border-radius: 0.9rem !important;
-  background: hsl(var(--card) / 0.68) !important;
-  border-color: hsl(var(--foreground) / 0.1) !important;
-  box-shadow: inset 0 1px 0 hsl(var(--foreground) / 0.045);
-}
-
-.nls-hub-selector button:hover {
-  transform: translateY(-1px);
-  border-color: hsl(var(--nls-coral) / 0.42) !important;
-}
-
-.nls-search-dock {
-  top: 3.55rem !important;
-  background: hsl(var(--nls-ink) / 0.82) !important;
-  border-bottom-color: hsl(var(--foreground) / 0.08) !important;
-  box-shadow: 0 16px 30px hsl(var(--nls-shadow) / 0.2) !important;
-  padding-top: 0.75rem !important;
-  padding-bottom: 0.7rem !important;
-}
-
-.nls-search-dock form > div {
-  filter: drop-shadow(0 8px 16px hsl(var(--nls-shadow) / 0.18));
-}
-
-.nls-search-dock input {
-  min-height: 2.85rem;
-  border-radius: 0.9rem !important;
-  background: hsl(var(--card) / 0.88) !important;
-  border-color: hsl(var(--foreground) / 0.12) !important;
-}
-
-.nls-search-dock input:focus {
-  border-color: hsl(var(--nls-coral) / 0.8) !important;
-  box-shadow: 0 0 0 4px hsl(var(--nls-coral) / 0.09), 0 10px 24px hsl(var(--nls-shadow) / 0.2);
-}
-
-.nls-search-dock form > button {
-  min-height: 2.85rem;
-  border-radius: 0.9rem !important;
-  background: hsl(var(--nls-coral)) !important;
-  box-shadow: 0 9px 20px hsl(var(--nls-coral) / 0.2) !important;
-}
-
-.nls-content-card {
-  background: linear-gradient(125deg, hsl(var(--card) / 0.94), hsl(var(--nls-ink-soft) / 0.86)) !important;
-  border-color: hsl(var(--foreground) / 0.1) !important;
-  border-radius: 1.15rem !important;
-  box-shadow: 0 16px 30px hsl(var(--nls-shadow) / 0.18), inset 0 1px 0 hsl(var(--foreground) / 0.035) !important;
-}
-
-.nls-content-card:hover {
-  transform: translateY(-2px);
-  border-color: hsl(var(--nls-coral) / 0.45) !important;
-  box-shadow: 0 20px 36px hsl(var(--nls-shadow) / 0.28), inset 0 1px 0 hsl(var(--foreground) / 0.06) !important;
-}
-
-.nls-content-card > div:first-child > div:first-child {
-  border-radius: 0.82rem !important;
-}
-
-.nls-content-card h3 {
-  letter-spacing: -0.015em;
-}
-
-.nls-bottom-nav {
-  background: hsl(var(--nls-ink) / 0.88) !important;
-  border-top-color: hsl(var(--foreground) / 0.09) !important;
-  box-shadow: 0 -16px 34px hsl(var(--nls-shadow) / 0.24);
-  padding-top: 0.7rem !important;
-}
-
-.nls-bottom-nav > div {
-  max-width: 34rem;
-  background: hsl(var(--card) / 0.72);
-  border: 1px solid hsl(var(--foreground) / 0.07);
-  border-radius: 1.1rem;
-  padding: 0.25rem;
-}
-
-.nls-bottom-nav button {
-  min-width: 4.5rem;
-  min-height: 2.8rem;
-  border-radius: 0.8rem;
-  transition: transform 180ms ease, background 180ms ease, color 180ms ease;
-}
-
-.nls-bottom-nav button:active {
-  transform: scale(0.94);
-}
-
-.nls-bottom-nav button[class*="text-[hsl(var(--primary))]"],
-.nls-bottom-nav button[class*="text-[hsl(var(--accent))]"],
-.nls-bottom-nav button[class*="text-sky-300"],
-.nls-bottom-nav button[class*="text-violet-300"] {
-  background: hsl(var(--foreground) / 0.07);
-}
-
-.nls-downloads-screen,
-.nls-settings-screen,
-.nls-offline-screen {
-  max-width: 62rem !important;
-  padding-top: 1.4rem !important;
-}
-
-.nls-downloads-screen h1,
-.nls-settings-screen h1,
-.nls-offline-screen h1 {
-  font-family: var(--font-display);
-  font-size: clamp(1.9rem, 4vw, 2.7rem);
-  letter-spacing: -0.02em;
-}
-
-.nls-downloads-screen > div:first-child,
-.nls-settings-screen > div:first-child,
-.nls-offline-screen > div:first-child {
-  border-bottom-color: hsl(var(--foreground) / 0.1) !important;
-  padding-bottom: 1.15rem !important;
-}
-
-.nls-download-card,
-.nls-download-progress,
-.nls-settings-card {
-  background: linear-gradient(135deg, hsl(var(--card) / 0.96), hsl(var(--nls-ink-soft) / 0.9)) !important;
-  border-color: hsl(var(--foreground) / 0.1) !important;
-  border-radius: 1.15rem !important;
-  box-shadow: 0 16px 32px hsl(var(--nls-shadow) / 0.17), inset 0 1px 0 hsl(var(--foreground) / 0.035) !important;
-}
-
-.nls-download-progress {
-  border-color: hsl(var(--nls-coral) / 0.35) !important;
-}
-
-.nls-downloads-screen [class*="bg-[hsl(var(--primary))]"],
-.nls-offline-screen [class*="bg-[hsl(var(--primary))]"] {
-  background: hsl(var(--nls-coral)) !important;
-}
-
-.nls-settings-card h2 {
-  letter-spacing: -0.01em;
-}
-
-.nls-settings-card button[class*="bg-indigo-600"] {
-  background: hsl(var(--nls-coral)) !important;
-  color: hsl(var(--primary-foreground)) !important;
-}
-
-.nls-settings-card button[class*="bg-indigo-600"]:hover {
-  filter: brightness(1.08);
-}
-
-.nls-auth-backdrop {
-  background: hsl(var(--nls-shadow) / 0.82) !important;
-}
-
-.nls-auth-panel {
-  background:
-    radial-gradient(circle at 100% 0%, hsl(var(--nls-coral) / 0.14), transparent 18rem),
-    linear-gradient(145deg, hsl(229 23% 14%), hsl(228 25% 9%)) !important;
-  border-color: hsl(var(--foreground) / 0.13) !important;
-  border-radius: 1.5rem !important;
-  box-shadow: 0 30px 90px hsl(var(--nls-shadow) / 0.55), inset 0 1px 0 hsl(var(--foreground) / 0.06) !important;
-}
-
-.nls-auth-panel h2 {
-  font-family: var(--font-display);
-  font-size: 2.25rem;
-  font-weight: 400;
-}
-
-.nls-auth-panel h2 span {
-  color: hsl(var(--nls-coral)) !important;
-  background: none !important;
-}
-
-.nls-auth-panel input {
-  background: hsl(var(--nls-ink) / 0.78) !important;
-  border-color: hsl(var(--foreground) / 0.11) !important;
-  min-height: 2.8rem;
-  border-radius: 0.85rem !important;
-}
-
-.nls-auth-panel input:focus {
-  border-color: hsl(var(--nls-mint) / 0.75) !important;
-  box-shadow: 0 0 0 4px hsl(var(--nls-mint) / 0.1) !important;
-}
-
-.nls-auth-panel form > button {
-  background: hsl(var(--nls-coral)) !important;
-  color: hsl(var(--primary-foreground)) !important;
-  border-radius: 0.85rem !important;
-  box-shadow: 0 12px 24px hsl(var(--nls-coral) / 0.18) !important;
-}
-
-.nls-viewer {
-  background: hsl(var(--nls-shadow) / 0.97) !important;
-}
-
-.nls-viewer > div:first-child {
-  min-height: 4rem;
-  background: hsl(var(--nls-ink) / 0.9);
-  border-bottom-color: hsl(var(--foreground) / 0.1) !important;
-}
-
-.nls-viewer h2 {
-  font-family: var(--font-display);
-  font-size: 1.3rem;
-  font-weight: 400;
-}
-
-.nls-modal-backdrop {
-  background: hsl(var(--nls-shadow) / 0.84) !important;
-}
-
-.nls-modal-panel {
-  background: linear-gradient(145deg, hsl(229 23% 14%), hsl(228 25% 9%)) !important;
-  border-color: hsl(var(--foreground) / 0.12) !important;
-  box-shadow: 0 30px 90px hsl(var(--nls-shadow) / 0.5), inset 0 1px 0 hsl(var(--foreground) / 0.05) !important;
-}
-
-@media (min-width: 768px) {
-  .nls-home-screen {
-    padding-left: 0.7rem;
-    padding-right: 0.7rem;
-  }
-
-  .nls-content-card {
-    padding: 0.85rem !important;
-  }
-}
-
-@media (max-width: 640px) {
-  .nls-header > div {
-    min-height: 3.25rem;
-  }
-
-  .nls-header [data-testid="button-brand"] > span {
-    font-size: 1.18rem;
-  }
-
-  .nls-header button[title*="demande"],
-  .nls-header [data-testid="button-open-feedback"] {
-    display: none;
-  }
-
-  .nls-downloads-screen,
-  .nls-settings-screen,
-  .nls-offline-screen {
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
-  }
-
-  .nls-auth-panel {
-    padding: 1.35rem !important;
-    border-radius: 1.25rem !important;
-  }
 }
 
 .no-scrollbar::-webkit-scrollbar {

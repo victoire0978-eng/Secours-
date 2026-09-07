@@ -381,7 +381,7 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
 
   return (
     <div
-      className={`nls-modal-backdrop fixed inset-0 z-50 bg-black/95 flex items-center justify-center backdrop-blur-lg select-none ${
+      className={`fixed inset-0 z-50 bg-black/95 flex items-center justify-center backdrop-blur-lg select-none ${
         isFullscreen ? 'p-0' : 'p-0 sm:p-4'
       }`}
     >
@@ -393,7 +393,7 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
           isFullscreen
             ? 'sm:max-w-none sm:rounded-none border-none'
             : 'sm:h-auto sm:max-w-4xl sm:rounded-3xl border border-white/10'
-        } nls-modal-panel bg-[#101018] overflow-hidden shadow-2xl flex flex-col justify-between ${
+        } bg-[#101018] overflow-hidden shadow-2xl flex flex-col justify-between ${
           isAudio ? 'sm:max-w-xl p-6 sm:p-8' : ''
         }`}
         style={

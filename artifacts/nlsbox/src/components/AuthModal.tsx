@@ -102,8 +102,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onSuccess }) => {
   };
 
   return (
-    <div className="nls-auth-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
-      <div className="nls-auth-panel w-full max-w-md bg-[#161622] border border-white/10 rounded-3xl shadow-2xl p-6 sm:p-8 relative overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
+      <div className="w-full max-w-md bg-[#161622] border border-white/10 rounded-3xl shadow-2xl p-6 sm:p-8 relative overflow-hidden">
         {/* Glow decoration */}
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-purple-600/20 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />

@@ -99,7 +99,7 @@ export const HubSelector: React.FC<HubSelectorProps> = ({
   const visibleHubs = hubs.filter((hub) => hub.id !== 'mature' || isMatureVisible);
 
   return (
-    <div className="nls-hub-selector w-full px-3 sm:px-5 py-2">
+    <div className="w-full px-3 sm:px-5 py-2">
       {/* Sleek Compact Horizontal Pill Bar */}
       <div className="max-w-5xl mx-auto flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
         {visibleHubs.map((hub) => {

@@ -147,7 +147,7 @@ export const EpisodeCard: React.FC<EpisodeCardProps> = ({
   };
 
   return (
-    <article className="nls-content-card group relative bg-[hsl(var(--card)/.82)] hover:bg-[hsl(var(--card))] rounded-2xl p-2.5 sm:p-3 border border-[hsl(var(--border)/.72)] hover:border-[hsl(var(--primary)/.46)] transition-all duration-200 shadow-[0_10px_28px_hsl(240_20%_3%/.16)]">
+    <article className="group relative bg-[hsl(var(--card)/.82)] hover:bg-[hsl(var(--card))] rounded-2xl p-2.5 sm:p-3 border border-[hsl(var(--border)/.72)] hover:border-[hsl(var(--primary)/.46)] transition-all duration-200 shadow-[0_10px_28px_hsl(240_20%_3%/.16)]">
       <div className="flex items-center gap-2.5 sm:gap-3">
         {/* Media Thumbnail / Icon */}
         <div

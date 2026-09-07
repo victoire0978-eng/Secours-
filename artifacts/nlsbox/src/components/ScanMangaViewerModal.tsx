@@ -389,12 +389,12 @@ export const ScanMangaViewerModal: React.FC<ScanMangaViewerModalProps> = ({
     <div
       ref={containerRef}
       id="scan-manga-viewer"
-      className="nls-modal-backdrop fixed inset-0 z-50 bg-[#0A0A0E] text-white flex flex-col select-none overflow-hidden"
+      className="fixed inset-0 z-50 bg-[#0A0A0E] text-white flex flex-col select-none overflow-hidden"
     >
       {/* 1. Header Toolbar */}
       <div
         id="scan-viewer-toolbar"
-        className="nls-modal-panel shrink-0 h-14 sm:h-16 px-3 sm:px-5 bg-[#121218]/95 backdrop-blur-md border-b border-white/10 flex items-center justify-between gap-2 sm:gap-4 z-20"
+        className="shrink-0 h-14 sm:h-16 px-3 sm:px-5 bg-[#121218]/95 backdrop-blur-md border-b border-white/10 flex items-center justify-between gap-2 sm:gap-4 z-20"
       >
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button

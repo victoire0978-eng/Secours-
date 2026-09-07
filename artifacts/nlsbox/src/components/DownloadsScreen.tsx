@@ -52,7 +52,7 @@ export const DownloadsScreen: React.FC<DownloadsScreenProps> = ({
   const isEmpty = activeList.length === 0 && savedDownloads.length === 0;
 
   return (
-    <main className="nls-downloads-screen nls-page-enter pb-28 pt-3 px-4 sm:px-5 max-w-4xl mx-auto">
+    <main className="nls-page-enter pb-28 pt-3 px-4 sm:px-5 max-w-4xl mx-auto">
       {/* Title & Storage stats banner */}
       <div className="flex items-center justify-between py-3 border-b border-white/5 mb-4">
         <div className="min-w-0">
@@ -99,7 +99,7 @@ export const DownloadsScreen: React.FC<DownloadsScreenProps> = ({
                 {activeList.map((task) => (
                   <div
                     key={task.episode.message_id}
-                     className="nls-download-progress bg-[hsl(var(--card))] rounded-2xl p-3.5 border border-[hsl(var(--primary)/.32)] shadow-lg relative overflow-hidden"
+                     className="bg-[hsl(var(--card))] rounded-2xl p-3.5 border border-[hsl(var(--primary)/.32)] shadow-lg relative overflow-hidden"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
@@ -191,7 +191,7 @@ export const DownloadsScreen: React.FC<DownloadsScreenProps> = ({
                   return (
                     <div
                       key={task.episode.message_id}
-                       className="nls-download-card bg-[hsl(var(--card))] hover:bg-[hsl(var(--card-foreground)/.05)] rounded-2xl p-3.5 border border-[hsl(var(--border)/.72)] flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors shadow-md group"
+                       className="bg-[hsl(var(--card))] hover:bg-[hsl(var(--card-foreground)/.05)] rounded-2xl p-3.5 border border-[hsl(var(--border)/.72)] flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors shadow-md group"
                     >
                       {/* Play button & Episode Info */}
                       <div
