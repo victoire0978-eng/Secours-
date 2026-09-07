@@ -25,8 +25,13 @@ import { OfflineIndicator } from './components/OfflineIndicator';
 import { SplashScreen } from './components/SplashScreen';
 import { Offline } from './pages/Offline';
 import { MediaClassifier } from './utils/mediaClassifier';
+import { useOfflineManager } from './hooks/useOfflineManager';
+import { usePlatform } from './hooks/usePlatform';
 
 export default function App() {
+  const { isIOS } = usePlatform();
+  const { playOffline } = useOfflineManager();
+
   // App state
   const [settings, setSettings] = useState<AppSettings>(() => StorageService.getSettings());
   const [currentTab, setCurrentTab] = useState<NavTab>('home');
@@ -562,7 +567,7 @@ export default function App() {
 
   // Play Episode / View Scan & Manga
   const handlePlayEpisode = useCallback(
-    (episode: Episode, isOffline: boolean = false) => {
+    async (episode: Episode, isOffline: boolean = false) => {
       // Log watch activity
       if (currentUser?.uid) {
         ActivityService.logWatch(
@@ -608,6 +613,24 @@ export default function App() {
         return;
       }
 
+      // iOS must use the OPFS bytes for an offline item. Rebuilding the
+      // original download URL here silently turns an offline playback into a
+      // network request (and fails as soon as Safari is offline). Android keeps
+      // its existing path untouched.
+      if (isIOS && isOffline) {
+        const localPlayback = await playOffline(episode.file_name);
+        if (!localPlayback) {
+          window.alert('Ce fichier n’est plus disponible dans le stockage hors-ligne de NLSbox.');
+          return;
+        }
+        setActivePlayer({
+          episode,
+          videoUrl: localPlayback.blobUrl,
+          isOffline: true,
+        });
+        return;
+      }
+
       const rawPath = episode.download_url || '';
       let cleanPath = rawPath.startsWith('/') ? rawPath : `/${rawPath}`;
       if (/^https?:\/\//i.test(rawPath)) {
@@ -626,7 +649,7 @@ export default function App() {
         isOffline,
       });
     },
-    [settings.backendUrl]
+    [isIOS, playOffline]
   );
 
   const handlePlayOnline = useCallback(

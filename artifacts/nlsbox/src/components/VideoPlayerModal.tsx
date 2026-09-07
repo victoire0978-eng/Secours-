@@ -37,6 +37,7 @@ import { offlineCacheService } from '../services/offlineCacheService';
 import { CombinedDownloadButton } from './CombinedDownloadButton';
 import { IOSActions } from './IOSActions';
 import { usePlatform } from '../hooks/usePlatform';
+import { canPlayLocallyOnIOS, getIOSExternalReaderHint } from '../utils/iosMediaSupport';
 import {
   getInternalStorageDownloadUrl,
   getDirectRemoteDownloadUrl,
@@ -68,6 +69,7 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { isIOS } = usePlatform();
 
   const [isPlaying, setIsPlaying] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
@@ -83,7 +85,6 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   const [isCopied, setIsCopied] = useState(false);
   const [isDirectShareCopied, setIsDirectShareCopied] = useState(false);
   const [iosMediaUrl, setIosMediaUrl] = useState<string | null>(null);
-  const { isIOS } = usePlatform();
 
   // Universal Device Adaptations
   const [isLocked, setIsLocked] = useState(false);
@@ -98,6 +99,11 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   const meta = MediaClassifier.analyze(episode?.title || '', episode?.file_name || '');
   const isAudio = meta.isAudio;
   const isMkv = episode?.file_name.toLowerCase().endsWith('.mkv') || false;
+  const iosNeedsExternalReader =
+    isIOS &&
+    isOffline &&
+    !!episode &&
+    !canPlayLocallyOnIOS(episode.file_name || '', '', isAudio ? 'audio' : 'video');
 
   const directDownloadUrl = React.useMemo(() => {
     if (!episode) return videoUrl;
@@ -134,7 +140,8 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
 
   useEffect(() => {
     setIosMediaUrl(null);
-  }, [episode?.message_id, videoUrl]);
+    setHasError(iosNeedsExternalReader);
+  }, [episode?.message_id, videoUrl, iosNeedsExternalReader]);
 
   useEffect(() => {
     return () => {
@@ -786,10 +793,16 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
 
                   <div>
                     <h3 className="text-white font-bold text-sm sm:text-base">
-                      {isMkv ? 'Vidéo au format MKV détectée' : 'Lecture directe disponible'}
+                      {iosNeedsExternalReader
+                        ? 'Format à ouvrir dans une application iOS'
+                        : isMkv
+                        ? 'Vidéo au format MKV détectée'
+                        : 'Lecture directe disponible'}
                     </h3>
                     <p className="text-xs text-gray-400 mt-1 leading-relaxed">
-                      {isMkv
+                      {iosNeedsExternalReader
+                        ? getIOSExternalReaderHint(episode.file_name, isAudio ? 'audio' : 'video')
+                        : isMkv
                         ? 'Ce fichier animé est encodé en .MKV (Matroska). Les navigateurs web mobiles requièrent un lecteur natif ou VLC pour le lire avec sous-titres.'
                         : 'Le navigateur n\'a pas pu décoder ce flux en direct. Vous pouvez l\'ouvrir instantanément dans votre lecteur vidéo externe ou le télécharger.'}
                     </p>
@@ -804,6 +817,7 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
                       messageId={episode.message_id}
                       variant="full"
                       className="w-full"
+                      showRead={!iosNeedsExternalReader}
                       onRead={handleIOSRead}
                     />
                   ) : (

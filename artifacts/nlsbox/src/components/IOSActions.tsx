@@ -17,6 +17,7 @@ interface IOSActionsProps {
   type?: OfflineFileType;
   initialBlob?: Blob | null;
   onRead?: (blobUrl: string, blob: Blob) => void;
+  showRead?: boolean;
   variant?: 'compact' | 'full';
   className?: string;
 }
@@ -34,6 +35,7 @@ export const IOSActions: React.FC<IOSActionsProps> = ({
   type,
   initialBlob = null,
   onRead,
+  showRead = true,
   variant = 'compact',
   className = '',
 }) => {
@@ -206,21 +208,23 @@ export const IOSActions: React.FC<IOSActionsProps> = ({
   return (
     <div className={`${compact ? 'flex flex-col gap-1' : 'w-full'} ${className}`} title={error || undefined}>
       <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={handleRead}
-          disabled={isReading || isOpening}
-          className={`${buttonClass} bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg`}
-          aria-label="Lire dans NLSbox"
-        >
-          {isReading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BookOpen className="w-3.5 h-3.5" />}
-          <span>{isReading && typeof progress === 'number' ? `Lire ${progress}%` : 'Lire'}</span>
-        </button>
+        {showRead && (
+          <button
+            type="button"
+            onClick={handleRead}
+            disabled={isReading || isOpening}
+            className={`${buttonClass} bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg`}
+            aria-label="Lire dans NLSbox"
+          >
+            {isReading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BookOpen className="w-3.5 h-3.5" />}
+            <span>{isReading && typeof progress === 'number' ? `Lire ${progress}%` : 'Lire'}</span>
+          </button>
+        )}
         <button
           type="button"
           onClick={handleOpen}
           disabled={isReading || isOpening}
-          className={`${buttonClass} bg-white/10 hover:bg-white/15 text-gray-200 border border-white/10`}
+          className={`${buttonClass} ${!showRead ? 'flex-1' : ''} bg-white/10 hover:bg-white/15 text-gray-200 border border-white/10`}
           aria-label="Ouvrir avec les options iOS"
         >
           {isOpening ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ExternalLink className="w-3.5 h-3.5" />}

@@ -26,6 +26,117 @@ const ZOOM_MAX = 250;
 const ZOOM_STEP = 25;
 const ZOOM_DEFAULT = 100;
 
+function normalizeArchivePath(path: string): string {
+  const parts: string[] = [];
+  for (const part of decodeURIComponent(path).split('/')) {
+    if (!part || part === '.') continue;
+    if (part === '..') parts.pop();
+    else parts.push(part);
+  }
+  return parts.join('/');
+}
+
+function resolveArchivePath(baseFile: string, relativePath: string): string {
+  const baseParts = baseFile.split('/');
+  baseParts.pop();
+  return normalizeArchivePath([...baseParts, relativePath].join('/'));
+}
+
+async function blobToDataUrl(value: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error || new Error('Lecture de ressource EPUB impossible'));
+    reader.readAsDataURL(value);
+  });
+}
+
+async function buildEpubHtml(blob: Blob): Promise<string> {
+  const zip = await JSZip.loadAsync(blob);
+  const container = await zip.file('META-INF/container.xml')?.async('string');
+  if (!container) throw new Error('EPUB invalide : fichier container.xml absent.');
+
+  const containerDoc = new DOMParser().parseFromString(container, 'application/xml');
+  const rootfilePath =
+    containerDoc.querySelector('rootfile')?.getAttribute('full-path') ||
+    containerDoc.querySelector('[full-path]')?.getAttribute('full-path');
+  if (!rootfilePath) throw new Error('EPUB invalide : manifeste introuvable.');
+
+  const opfPath = normalizeArchivePath(rootfilePath);
+  const opf = await zip.file(opfPath)?.async('string');
+  if (!opf) throw new Error('EPUB invalide : fichier OPF absent.');
+
+  const opfDoc = new DOMParser().parseFromString(opf, 'application/xml');
+  const manifest = new Map<string, { href: string; mediaType: string }>();
+  Array.from(opfDoc.getElementsByTagName('item')).forEach((item) => {
+    const id = item.getAttribute('id');
+    const href = item.getAttribute('href');
+    if (id && href) manifest.set(id, { href, mediaType: item.getAttribute('media-type') || '' });
+  });
+
+  const spineIds = Array.from(opfDoc.getElementsByTagName('itemref'))
+    .map((item) => item.getAttribute('idref'))
+    .filter((id): id is string => !!id);
+  const chapters: string[] = [];
+
+  for (let index = 0; index < spineIds.length; index += 1) {
+    const item = manifest.get(spineIds[index]);
+    if (!item || !/xhtml|html/i.test(item.mediaType)) continue;
+    const chapterPath = resolveArchivePath(opfPath, item.href);
+    const source = await zip.file(chapterPath)?.async('string');
+    if (!source) continue;
+
+    const chapterDoc = new DOMParser().parseFromString(source, 'text/html');
+    chapterDoc.querySelectorAll('script, style, link, iframe, object, embed').forEach((node) => node.remove());
+
+    for (const image of Array.from(chapterDoc.querySelectorAll('img'))) {
+      const sourcePath = image.getAttribute('src');
+      if (!sourcePath) continue;
+      const imagePath = resolveArchivePath(chapterPath, sourcePath.split('#')[0]);
+      const imageFile = zip.file(imagePath);
+      if (!imageFile) {
+        image.removeAttribute('src');
+        continue;
+      }
+      const imageBlob = await imageFile.async('blob');
+      image.setAttribute('src', await blobToDataUrl(
+        imageBlob.type ? imageBlob : new Blob([imageBlob], { type: guessMimeTypeFromFilename(imagePath) })
+      ));
+    }
+
+    const body = chapterDoc.body?.innerHTML || chapterDoc.documentElement.innerHTML;
+    if (body.trim()) {
+      chapters.push(`<section class="epub-chapter">${body}</section>`);
+    }
+  }
+
+  if (chapters.length === 0) throw new Error('Aucun chapitre lisible dans cet EPUB.');
+  return `<!doctype html>
+    <html><head><meta name="viewport" content="width=device-width,initial-scale=1">
+    <style>
+      :root { color-scheme: light; }
+      body { margin: 0; padding: 24px 18px 56px; color: #202124; background: #fff; font: 17px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+      .epub-chapter { max-width: 760px; margin: 0 auto 48px; }
+      .epub-chapter + .epub-chapter { border-top: 1px solid #ddd; padding-top: 32px; }
+      img { display: block; max-width: 100%; height: auto; margin: 16px auto; }
+      h1,h2,h3 { line-height: 1.25; } a { color: #4f46e5; }
+    </style></head><body>${chapters.join('')}</body></html>`;
+}
+
+async function extractDocxText(blob: Blob): Promise<string> {
+  const zip = await JSZip.loadAsync(blob);
+  const xml = await zip.file('word/document.xml')?.async('string');
+  if (!xml) throw new Error('DOCX invalide : document.xml absent.');
+  const doc = new DOMParser().parseFromString(xml, 'application/xml');
+  const paragraphs = Array.from(doc.getElementsByTagNameNS('http://schemas.openxmlformats.org/wordprocessingml/2006/main', 'p'));
+  const text = paragraphs.map((paragraph) =>
+    Array.from(paragraph.getElementsByTagNameNS('http://schemas.openxmlformats.org/wordprocessingml/2006/main', 't'))
+      .map((node) => node.textContent || '')
+      .join('')
+  );
+  return text.join('\n\n').trim();
+}
+
 /** Vrai si ce type de fichier hors-ligne doit être extrait via JSZip (CBZ/CBR/ZIP/RAR). */
 function isZipExtractableType(type: OfflineFileRecord['type']): boolean {
   return type === 'manga' || type === 'archive';
@@ -45,6 +156,8 @@ export const OfflineFileViewer: React.FC<OfflineFileViewerProps> = ({ record, bl
   const [zoom, setZoom] = useState(ZOOM_DEFAULT);
   const [isLoading, setIsLoading] = useState(isZipExtractableType(record.type));
   const [mangaError, setMangaError] = useState<string | null>(null);
+  const [documentHtml, setDocumentHtml] = useState<string | null>(null);
+  const [documentText, setDocumentText] = useState<string | null>(null);
   const { isIOS } = usePlatform();
 
   // Libère le blob URL principal quand la visionneuse se ferme
@@ -116,6 +229,46 @@ export const OfflineFileViewer: React.FC<OfflineFileViewerProps> = ({ record, bl
     };
   }, [blob, record.type]);
 
+  const isPdf = record.mimeType === 'application/pdf' || record.filename.toLowerCase().endsWith('.pdf');
+  const isText = record.mimeType === 'text/plain' || record.filename.toLowerCase().endsWith('.txt');
+  const isEpub = record.filename.toLowerCase().endsWith('.epub') || record.mimeType.includes('epub');
+  const isDocx =
+    record.filename.toLowerCase().endsWith('.docx') ||
+    record.mimeType.includes('wordprocessingml');
+
+  useEffect(() => {
+    if (!isEpub && !isDocx && !isText) return;
+    let cancelled = false;
+    setIsLoading(true);
+    setDocumentHtml(null);
+    setDocumentText(null);
+    setMangaError(null);
+
+    (async () => {
+      try {
+        if (isEpub) {
+          const html = await buildEpubHtml(blob);
+          if (!cancelled) setDocumentHtml(html);
+        } else if (isDocx) {
+          const text = await extractDocxText(blob);
+          if (!cancelled) setDocumentText(text);
+        } else {
+          const text = await blob.text();
+          if (!cancelled) setDocumentText(text);
+        }
+      } catch (error) {
+        console.warn('[OfflineFileViewer] Lecture locale du document échouée', error);
+        if (!cancelled) setMangaError(error instanceof Error ? error.message : 'Document illisible.');
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [blob, isDocx, isEpub, isText]);
+
   const handleZoomIn = () => setZoom((z) => Math.min(ZOOM_MAX, z + ZOOM_STEP));
   const handleZoomOut = () => setZoom((z) => Math.max(ZOOM_MIN, z - ZOOM_STEP));
   const handleZoomReset = () => setZoom(ZOOM_DEFAULT);
@@ -134,9 +287,6 @@ export const OfflineFileViewer: React.FC<OfflineFileViewerProps> = ({ record, bl
       if (document.body.contains(a)) document.body.removeChild(a);
     }, 1500);
   };
-
-  const isPdf = record.mimeType === 'application/pdf' || record.filename.toLowerCase().endsWith('.pdf');
-  const isText = record.mimeType === 'text/plain' || record.filename.toLowerCase().endsWith('.txt');
 
   const renderFallback = (message?: string) => (
     <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center p-6">
@@ -189,8 +339,42 @@ export const OfflineFileViewer: React.FC<OfflineFileViewerProps> = ({ record, bl
       );
     }
 
-    if (record.type === 'doc' && (isPdf || isText)) {
+    if (record.type === 'doc' && isPdf) {
       return <iframe src={blobUrl} title={record.filename} className="flex-1 w-full bg-white" />;
+    }
+
+    if (record.type === 'doc' && (isText || isDocx)) {
+      if (isLoading) {
+        return (
+          <div className="flex-1 flex items-center justify-center text-gray-400">
+            <Loader2 className="w-7 h-7 animate-spin text-sky-400" />
+          </div>
+        );
+      }
+      if (documentText !== null) {
+        return (
+          <div className="flex-1 overflow-auto bg-white text-gray-900 p-5 sm:p-8">
+            <pre className="max-w-3xl mx-auto whitespace-pre-wrap break-words text-[15px] leading-7 font-sans">
+              {documentText || 'Document vide.'}
+            </pre>
+          </div>
+        );
+      }
+      return renderFallback(mangaError || undefined);
+    }
+
+    if (record.type === 'doc' && isEpub) {
+      if (isLoading) {
+        return (
+          <div className="flex-1 flex items-center justify-center text-gray-400">
+            <Loader2 className="w-7 h-7 animate-spin text-sky-400" />
+          </div>
+        );
+      }
+      if (documentHtml) {
+        return <iframe srcDoc={documentHtml} title={record.filename} className="flex-1 w-full bg-white" />;
+      }
+      return renderFallback(mangaError || undefined);
     }
 
     if (isZipExtractableType(record.type)) {

@@ -31,6 +31,7 @@ import { shareDirectMedia } from '../utils/shareMedia';
 import { CombinedDownloadButton } from './CombinedDownloadButton';
 import { IOSActions } from './IOSActions';
 import { usePlatform } from '../hooks/usePlatform';
+import { useOfflineManager } from '../hooks/useOfflineManager';
 import {
   requestFullscreenSafe,
   exitFullscreenSafe,
@@ -72,6 +73,7 @@ export const ScanMangaViewerModal: React.FC<ScanMangaViewerModalProps> = ({
   const [loadedBlob, setLoadedBlob] = useState<Blob | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const { isIOS } = usePlatform();
+  const { playOffline } = useOfflineManager();
 
   const containerRef = useRef<HTMLDivElement>(null);
   const webtoonRef = useRef<HTMLDivElement>(null);
@@ -131,15 +133,18 @@ export const ScanMangaViewerModal: React.FC<ScanMangaViewerModalProps> = ({
     setDetectedPdfBlobUrl(null);
     setLoadedBlob(null);
 
-    // 1. PDF Documents: Rendered directly via embedded viewer
-    if (isPdf) {
+    // 1. Online PDF documents can use the server view directly. Offline
+    // documents must continue through the Blob pipeline below; otherwise the
+    // iframe and the iOS share action would silently request the network URL.
+    if (isPdf && !isOffline) {
       setIsLoading(false);
       setPages([]);
       return;
     }
 
-    // 2. Single image or wallpaper: Directly point to the actual stream URL
-    if (isSingleImage || isWallpaper) {
+    // 2. Online images can point at the server. Offline images are loaded
+    // from OPFS below so they work with airplane mode enabled.
+    if ((isSingleImage || isWallpaper) && !isOffline) {
       setIsLoading(false);
       setReadingMode('wallpaper');
       setFitMode('contain');
@@ -151,10 +156,15 @@ export const ScanMangaViewerModal: React.FC<ScanMangaViewerModalProps> = ({
     setIsLoading(true);
     setLoadingProgress('Vérification du cache...');
 
-    // Check offline cache first, while strictly rejecting any legacy mock Unsplash data!
-    offlineCacheService
-      .getMangaChapter(String(episode.message_id))
-      .then(async (cached) => {
+    // Check the OPFS file first for an item explicitly opened from the
+    // offline/downloads flows. The old chapter cache stores blob URLs, which
+    // are not reusable after a browser restart and therefore cannot be the
+    // source of truth here.
+    const loadSource = isOffline
+      ? Promise.resolve(null)
+      : offlineCacheService.getMangaChapter(String(episode.message_id));
+
+    loadSource.then(async (cached) => {
         if (!isMounted) return;
 
         // Discard legacy corrupt mock cache if found
@@ -166,14 +176,24 @@ export const ScanMangaViewerModal: React.FC<ScanMangaViewerModalProps> = ({
           return;
         }
 
-        setLoadingProgress('Chargement du chapitre scan...');
+        setLoadingProgress(isOffline ? 'Lecture du fichier local...' : 'Chargement du chapitre scan...');
         try {
-          const response = await fetch(viewUrl);
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+          let blob: Blob;
+          if (isOffline) {
+            const localPlayback = await playOffline(fileName);
+            if (!localPlayback) {
+              throw new Error('Fichier absent du stockage hors-ligne');
+            }
+            blob = localPlayback.blob;
+            createdBlobUrls.push(localPlayback.blobUrl);
+          } else {
+            const response = await fetch(viewUrl);
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}`);
+            }
+            blob = await response.blob();
           }
 
-          const blob = await response.blob();
           if (!isMounted) return;
           setLoadedBlob(blob);
 
@@ -303,7 +323,7 @@ export const ScanMangaViewerModal: React.FC<ScanMangaViewerModalProps> = ({
         }
       });
     };
-  }, [episode.message_id, isPdf, isArchive, isSingleImage, isWallpaper, viewUrl, retryCount]);
+    }, [episode.message_id, fileName, isOffline, isPdf, isArchive, isSingleImage, isWallpaper, playOffline, viewUrl, retryCount]);
 
   // Fullscreen listener
   useEffect(() => {

@@ -1,0 +1,1 @@
+- [Lecture média iOS](ios-offline-media.md) — Safari lit seulement les conteneurs/codecs qu’il déclare compatibles; les formats comme MKV/AVI nécessitent un lecteur natif via partage.
