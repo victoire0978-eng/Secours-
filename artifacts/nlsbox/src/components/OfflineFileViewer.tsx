@@ -450,7 +450,7 @@ export const OfflineFileViewer: React.FC<OfflineFileViewerProps> = ({ record, bl
   };
 
   return (
-    <div className="fixed inset-0 z-[60] bg-black/95 backdrop-blur-sm flex flex-col">
+    <div className="nls-viewer fixed inset-0 z-[60] bg-black/95 backdrop-blur-sm flex flex-col">
       <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 shrink-0">
         <h2 className="text-sm font-bold text-white truncate pr-2">{record.filename}</h2>
         <button

@@ -116,8 +116,8 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-      <div className="w-full max-w-lg bg-[#161622] border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+    <div className="nls-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+      <div className="nls-modal-panel w-full max-w-lg bg-[#161622] border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col">
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-white/5 flex items-center justify-between bg-[#12121c]">
           <div className="flex items-center gap-2.5">

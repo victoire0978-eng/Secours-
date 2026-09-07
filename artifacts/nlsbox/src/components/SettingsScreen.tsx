@@ -26,7 +26,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   onClearStorage,
 }) => {
   return (
-    <main className="nls-page-enter pb-28 pt-3 px-4 sm:px-5 max-w-3xl mx-auto space-y-5">
+    <main className="nls-settings-screen nls-page-enter pb-28 pt-3 px-4 sm:px-5 max-w-3xl mx-auto space-y-5">
       {/* Header */}
       <div className="py-2 border-b border-white/5 flex items-center justify-between">
         <div>
@@ -41,7 +41,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
       </div>
 
       {/* 1. Application Mobile & PWA */}
-      <div className="bg-[hsl(var(--card))] rounded-3xl p-4 sm:p-5 border border-[hsl(var(--border)/.8)] shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="nls-settings-card bg-[hsl(var(--card))] rounded-3xl p-4 sm:p-5 border border-[hsl(var(--border)/.8)] shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="space-y-1">
           <h2 className="text-sm font-bold text-white flex items-center gap-2">
             <Smartphone className="w-4 h-4 text-purple-400" />
@@ -57,7 +57,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
       </div>
 
       {/* 2. Préférences de Lecture */}
-      <div className="bg-[hsl(var(--card))] rounded-3xl p-4 sm:p-5 border border-[hsl(var(--border)/.8)] shadow-lg space-y-4">
+      <div className="nls-settings-card bg-[hsl(var(--card))] rounded-3xl p-4 sm:p-5 border border-[hsl(var(--border)/.8)] shadow-lg space-y-4">
         <h2 className="text-sm font-bold text-white flex items-center gap-2">
           <PlaySquare className="w-4 h-4 text-indigo-400" />
           Préférences de Lecture
@@ -127,7 +127,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
       </div>
 
       {/* 3. Données & Cache Local */}
-      <div className="bg-[hsl(var(--card))] rounded-3xl p-4 sm:p-5 border border-[hsl(var(--border)/.8)] shadow-lg">
+      <div className="nls-settings-card bg-[hsl(var(--card))] rounded-3xl p-4 sm:p-5 border border-[hsl(var(--border)/.8)] shadow-lg">
         <h2 className="text-sm font-bold text-white mb-2 flex items-center gap-2">
           <Database className="w-4 h-4 text-purple-400" />
           Données & Cache Local

@@ -53,11 +53,11 @@ export const ChannelSelectorModal: React.FC<ChannelSelectorModalProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in select-none"
+      className="nls-modal-backdrop fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in select-none"
       onClick={onClose}
     >
       <div 
-        className="w-full max-w-md bg-[#16161C] border border-white/10 rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl p-5 space-y-4 flex flex-col"
+        className="nls-modal-panel w-full max-w-md bg-[#16161C] border border-white/10 rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl p-5 space-y-4 flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

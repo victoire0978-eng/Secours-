@@ -888,7 +888,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] flex flex-col font-sans selection:bg-[hsl(var(--primary)/.4)] selection:text-[hsl(var(--foreground))] antialiased overflow-x-hidden">
+    <div className="nls-app-shell min-h-[100dvh] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] flex flex-col font-sans selection:bg-[hsl(var(--primary)/.4)] selection:text-[hsl(var(--foreground))] antialiased overflow-x-hidden">
       {/* 1. Header Bar with transparent mode toggle */}
       <Header
         activeCategory={settings.activeCategory || 'anime'}
@@ -908,7 +908,7 @@ export default function App() {
       />
 
       {/* 2. Main Content View */}
-      <main className="flex-1 w-full max-w-5xl mx-auto px-0">
+      <main className="nls-main flex-1 w-full max-w-5xl mx-auto px-0">
         {currentTab === 'home' && (
           <HomeScreen
             episodes={episodes}

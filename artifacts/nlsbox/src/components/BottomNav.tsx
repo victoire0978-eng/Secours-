@@ -15,7 +15,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   activeDownloadsCount,
 }) => {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[hsl(var(--background)/.94)] backdrop-blur-xl border-t border-[hsl(var(--border)/.85)] py-2 px-3 pb-[calc(.5rem+env(safe-area-inset-bottom))]">
+    <nav className="nls-bottom-nav fixed bottom-0 left-0 right-0 z-40 bg-[hsl(var(--background)/.94)] backdrop-blur-xl border-t border-[hsl(var(--border)/.85)] py-2 px-3 pb-[calc(.5rem+env(safe-area-inset-bottom))]">
       <div className="max-w-lg mx-auto flex items-center justify-around">
         {/* Accueil */}
         <button

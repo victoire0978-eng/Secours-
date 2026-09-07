@@ -607,7 +607,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const subFilters = getSubFilters();
 
   return (
-    <div className="nls-page-enter pb-28 pt-1">
+    <div className="nls-home-screen nls-page-enter pb-28 pt-1">
       {/* 1. Hub Category Selector (Sous-Applications) */}
       <HubSelector
         activeCategory={activeCategory}
@@ -616,7 +616,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       />
 
       {/* 2. Sticky Search Bar & Quick Filters (Toujours accessible lors du défilement) */}
-      <div className="sticky top-[45px] sm:top-[54px] z-20 bg-[hsl(var(--background)/.94)] backdrop-blur-xl px-3 sm:px-5 py-2 border-b border-[hsl(var(--border)/.74)] shadow-lg space-y-2">
+      <div className="nls-search-dock sticky top-[45px] sm:top-[54px] z-20 bg-[hsl(var(--background)/.94)] backdrop-blur-xl px-3 sm:px-5 py-2 border-b border-[hsl(var(--border)/.74)] shadow-lg space-y-2">
         {/* Manual Search Bar */}
         <form onSubmit={handleManualSearch} className="flex items-center gap-1.5">
           <div className="relative flex-1" ref={searchContainerRef}>

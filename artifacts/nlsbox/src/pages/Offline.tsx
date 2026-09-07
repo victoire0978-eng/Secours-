@@ -265,7 +265,7 @@ export const Offline: React.FC<OfflineProps> = ({ onPlayVideo }) => {
   const formattedUsage = storageUsage.usage > 0 ? formatOfflineSize(storageUsage.usage) : null;
 
   return (
-    <div className="pb-28 pt-2 px-4 max-w-3xl mx-auto">
+    <div className="nls-offline-screen pb-28 pt-2 px-4 max-w-3xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between py-3 border-b border-white/5 mb-4 gap-3">
         <div className="min-w-0">
