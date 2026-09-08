@@ -23,7 +23,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
-import { Episode, DownloadTask, JikanAnimeData, HubCategory, ChannelInfo } from '../types';
+import { Episode, DownloadTask, JikanAnimeData, HubCategory, ChannelInfo, DownloadProgressUpdate } from '../types';
 import { EpisodeCard } from './EpisodeCard';
 import { ShimmerSkeleton } from './ShimmerSkeleton';
 import { JikanService } from '../services/jikan';
@@ -56,6 +56,11 @@ interface HomeScreenProps {
   onSearch: (query: string) => void;
   onPlayEpisode: (episode: Episode) => void;
   onDownloadEpisode: (episode: Episode) => void;
+  onDownloadStart?: (episode: Episode, cancel: () => void) => void;
+  onDownloadProgress?: (episode: Episode, progress: DownloadProgressUpdate) => void;
+  onDownloadComplete?: (episode: Episode) => void;
+  onDownloadError?: (episode: Episode, error: Error) => void;
+  onDownloadFinished?: (episode: Episode) => void;
   activeDownloads: Record<number, DownloadTask>;
   savedDownloads: DownloadTask[];
   onOpenChannelModal?: () => void;
@@ -79,6 +84,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onSearch,
   onPlayEpisode,
   onDownloadEpisode,
+  onDownloadStart,
+  onDownloadProgress,
+  onDownloadComplete,
+  onDownloadError,
+  onDownloadFinished,
   activeDownloads,
   savedDownloads,
   onOpenChannelModal,
@@ -994,6 +1004,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                     posterUrl={poster}
                     onPlay={onPlayEpisode}
                     onDownload={onDownloadEpisode}
+                    onDownloadStart={onDownloadStart}
+                    onDownloadProgress={onDownloadProgress}
+                    onDownloadComplete={onDownloadComplete}
+                    onDownloadError={onDownloadError}
+                    onDownloadFinished={onDownloadFinished}
                     onOpenInfo={handleOpenEpisodeInfo}
                     downloadTask={downloadTask}
                     isDownloaded={isDownloaded}
@@ -1116,6 +1131,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         }}
         onPlayEpisode={onPlayEpisode}
         onDownloadEpisode={onDownloadEpisode}
+        onDownloadStart={onDownloadStart}
+        onDownloadProgress={onDownloadProgress}
+        onDownloadComplete={onDownloadComplete}
+        onDownloadError={onDownloadError}
+        onDownloadFinished={onDownloadFinished}
         onSearchInChannels={(title) => {
           setSearchInput(title);
           lastSearchedQuery.current = title;

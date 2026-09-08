@@ -5,6 +5,7 @@ import {
   OfflineSaveMeta,
   useOfflineManager,
 } from '../hooks/useOfflineManager';
+import type { DownloadProgressUpdate } from '../types';
 import { fetchBlobWithProgress, triggerBlobDeviceDownload } from '../utils/download';
 
 interface CombinedDownloadButtonProps {
@@ -16,7 +17,11 @@ interface CombinedDownloadButtonProps {
   messageId?: number | string;
   variant?: 'icon' | 'full';
   className?: string;
+  onStarted?: (cancel: () => void) => void;
+  onProgress?: (progress: DownloadProgressUpdate) => void;
   onCompleted?: () => void;
+  onError?: (error: Error) => void;
+  onFinished?: () => void;
 }
 
 /**
@@ -32,14 +37,20 @@ export const CombinedDownloadButton: React.FC<CombinedDownloadButtonProps> = ({
   messageId,
   variant = 'icon',
   className = '',
+  onStarted,
+  onProgress,
   onCompleted,
+  onError,
+  onFinished,
 }) => {
   const { isSupported, saveOfflineBlob, isFileOffline, getProgress } = useOfflineManager();
   const [isBusy, setIsBusy] = useState(false);
   const [networkProgress, setNetworkProgress] = useState<number | null>(null);
   const [downloadPhase, setDownloadPhase] = useState<'network' | 'offline' | null>(null);
+  const [currentProgress, setCurrentProgress] = useState<DownloadProgressUpdate | null>(null);
   const [error, setError] = useState<string | null>(null);
   const mountedRef = useRef(true);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(
     () => () => {
@@ -50,11 +61,20 @@ export const CombinedDownloadButton: React.FC<CombinedDownloadButtonProps> = ({
 
   const isSaved = isFileOffline(filename, channelId, messageId);
   const offlineProgress = getProgress(filename, channelId, messageId);
-  const progress = downloadPhase === 'network'
-    ? (typeof networkProgress === 'number' ? Math.round(networkProgress / 2) : null)
-    : downloadPhase === 'offline'
-      ? 50 + (typeof offlineProgress === 'number' ? Math.round(offlineProgress / 2) : 0)
-      : null;
+  const progress = currentProgress?.percent ?? null;
+
+  const reportProgress = useCallback(
+    (update: DownloadProgressUpdate) => {
+      onProgress?.(update);
+      if (mountedRef.current) {
+        setCurrentProgress(update);
+        if (update.phase === 'network') {
+          setNetworkProgress(update.percent);
+        }
+      }
+    },
+    [onProgress]
+  );
 
   const handleClick = useCallback(
     async (event: React.MouseEvent) => {
@@ -66,12 +86,24 @@ export const CombinedDownloadButton: React.FC<CombinedDownloadButtonProps> = ({
       setIsBusy(true);
       setNetworkProgress(0);
       setDownloadPhase('network');
+      setCurrentProgress({
+        phase: 'network',
+        loadedBytes: 0,
+        totalBytes: 0,
+        percent: null,
+        bytesPerSecond: 0,
+      });
+      const abortController = new AbortController();
+      abortControllerRef.current = abortController;
+      onStarted?.(() => abortController.abort());
 
       try {
         // The only network request. The same blob goes to both destinations.
-        const { blob, contentType: responseContentType } = await fetchBlobWithProgress(url, (percent) => {
-          if (mountedRef.current) setNetworkProgress(percent);
-        });
+        const { blob, contentType: responseContentType } = await fetchBlobWithProgress(
+          url,
+          reportProgress,
+          abortController.signal
+        );
         const contentType = responseContentType || blob.type || mimeType;
 
         // Trigger this immediately after the user gesture so mobile browsers
@@ -81,23 +113,44 @@ export const CombinedDownloadButton: React.FC<CombinedDownloadButtonProps> = ({
         }
 
         setDownloadPhase('offline');
-        await saveOfflineBlob(blob, url, filename, contentType, {
-          channelId,
-          messageId,
-          type,
-        } satisfies OfflineSaveMeta);
+        reportProgress({
+          phase: 'offline',
+          loadedBytes: 0,
+          totalBytes: blob.size,
+          percent: 0,
+          bytesPerSecond: 0,
+        });
+        await saveOfflineBlob(
+          blob,
+          url,
+          filename,
+          contentType,
+          {
+            channelId,
+            messageId,
+            type,
+          } satisfies OfflineSaveMeta,
+          reportProgress
+        );
 
         onCompleted?.();
       } catch (downloadError) {
         console.warn('[CombinedDownloadButton] téléchargement combiné échoué', downloadError);
+        const normalizedError = downloadError instanceof Error
+          ? downloadError
+          : new Error('Téléchargement impossible');
+        onError?.(normalizedError);
         if (mountedRef.current) {
-          setError(downloadError instanceof Error ? downloadError.message : 'Téléchargement impossible');
+          setError(normalizedError.message);
         }
       } finally {
+        abortControllerRef.current = null;
+        onFinished?.();
         if (mountedRef.current) {
           setIsBusy(false);
           setDownloadPhase(null);
           setNetworkProgress(null);
+          setCurrentProgress(null);
         }
       }
     },
@@ -109,7 +162,12 @@ export const CombinedDownloadButton: React.FC<CombinedDownloadButtonProps> = ({
       isSupported,
       messageId,
       mimeType,
+      onStarted,
+      onProgress,
       onCompleted,
+      onError,
+      onFinished,
+      reportProgress,
       saveOfflineBlob,
       type,
       url,
@@ -129,7 +187,7 @@ export const CombinedDownloadButton: React.FC<CombinedDownloadButtonProps> = ({
   }
 
   const title = error || (isBusy && typeof progress === 'number'
-    ? `Téléchargement en cours : ${progress}%`
+    ? `${currentProgress?.phase === 'network' ? 'Téléchargement' : 'Écriture hors-ligne'} : ${progress}%`
     : !isSupported
     ? "Le stockage hors-ligne n'est pas disponible sur ce navigateur"
     : 'Télécharger sur l’appareil et enregistrer pour le mode hors-ligne');
@@ -147,7 +205,7 @@ export const CombinedDownloadButton: React.FC<CombinedDownloadButtonProps> = ({
           {isBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
           <span>
             {isBusy
-              ? `Téléchargement…${typeof progress === 'number' ? ` ${progress}%` : ''}`
+              ? `${currentProgress?.phase === 'network' ? 'Téléchargement' : 'Enregistrement hors-ligne'}…${typeof progress === 'number' ? ` ${progress}%` : ''}`
               : "Télécharger sur l'appareil"}
           </span>
         </button>
@@ -155,7 +213,7 @@ export const CombinedDownloadButton: React.FC<CombinedDownloadButtonProps> = ({
           <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-white/10" aria-hidden="true">
             <div
               className="h-full rounded-full bg-purple-400 transition-all duration-300"
-              style={{ width: `${typeof progress === 'number' ? progress : 15}%` }}
+              style={{ width: `${typeof progress === 'number' ? progress : 0}%` }}
             />
           </div>
         )}

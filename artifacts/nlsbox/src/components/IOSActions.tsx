@@ -7,6 +7,7 @@ import {
 } from '../hooks/useOfflineManager';
 import { usePlatform } from '../hooks/usePlatform';
 import { fetchBlobWithProgress } from '../utils/download';
+import type { DownloadProgressUpdate } from '../types';
 
 interface IOSActionsProps {
   fileUrl: string;
@@ -82,7 +83,9 @@ export const IOSActions: React.FC<IOSActionsProps> = ({
         throw new Error('Fichier indisponible');
       }
 
-      const { blob } = await fetchBlobWithProgress(fileUrl, onProgress);
+      const { blob } = await fetchBlobWithProgress(fileUrl, (progress: DownloadProgressUpdate) => {
+        onProgress?.(progress.percent);
+      });
       blobCacheRef.current = { key: fileKey, blob };
       return blob;
     },

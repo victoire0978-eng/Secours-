@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { FolderDown, CheckCircle2, X, Ban } from 'lucide-react';
 import { User } from 'firebase/auth';
-import { AppSettings, DownloadTask, Episode, CatalogResponse, HubCategory, ChannelInfo, AppNotification } from './types';
+import { AppSettings, DownloadTask, Episode, CatalogResponse, HubCategory, ChannelInfo, AppNotification, DownloadProgressUpdate } from './types';
 import { StorageService, DEFAULT_SETTINGS, DEFAULT_BACKUP_CHANNELS } from './services/storage';
 import { GlobalSyncService } from './services/syncService';
 import { NlsApiService } from './services/api';
@@ -62,6 +62,7 @@ export default function App() {
   // Downloads state
   const [activeDownloads, setActiveDownloads] = useState<Record<number, DownloadTask>>({});
   const [savedDownloads, setSavedDownloads] = useState<DownloadTask[]>(() => StorageService.getDownloads());
+  const downloadCancelHandlersRef = useRef<Record<number, () => void>>({});
 
   // Video / Audio Player state
   const [activePlayer, setActivePlayer] = useState<{
@@ -443,71 +444,74 @@ export default function App() {
     };
   }, [performSearch]);
 
-  // Handle active downloads progress loop smoothly
-  const hasActiveDownloads = Object.keys(activeDownloads).length > 0;
-  useEffect(() => {
-    if (!hasActiveDownloads) return;
+  // Download progress is driven exclusively by the real network and OPFS byte counts.
+  const handleDownloadStart = useCallback((episode: Episode, cancel: () => void) => {
+    downloadCancelHandlersRef.current[episode.message_id] = cancel;
+    setActiveDownloads((prev) => {
+      if (prev[episode.message_id]) return prev;
+      return {
+        ...prev,
+        [episode.message_id]: {
+          episode,
+          progress: 0,
+          downloadedBytes: 0,
+          totalBytes: 0,
+          status: 'downloading',
+          speedMbPerSec: 0,
+          phase: 'network',
+        },
+      };
+    });
+  }, []);
 
-    const interval = setInterval(() => {
+  const handleDownloadProgress = useCallback(
+    (episode: Episode, update: DownloadProgressUpdate) => {
       setActiveDownloads((prev) => {
-        const keys = Object.keys(prev);
-        if (keys.length === 0) return prev;
-
-        const next = { ...prev };
-        let hasChanges = false;
-
-        for (const key of keys) {
-          const id = Number(key);
-          const task = next[id];
-          if (task && task.status === 'downloading') {
-            hasChanges = true;
-            const speed = 6 + Math.random() * 6; // 6-12 MB/s
-            const increment = (speed / (task.episode.size_mb || 400)) * 100 * 0.5;
-            const newProgress = Math.min(100, task.progress + increment);
-            const totalBytes = (task.episode.size_mb || 400) * 1024 * 1024;
-            const downloadedBytes = (newProgress / 100) * totalBytes;
-
-            if (newProgress >= 100) {
-              const completedTask: DownloadTask = {
-                ...task,
-                progress: 100,
-                status: 'completed',
-                downloadedBytes: totalBytes,
-                completedAt: new Date().toISOString(),
-              };
-
-              setSavedDownloads((saved) => {
-                const updated = [completedTask, ...saved.filter((s) => s.episode.message_id !== id)];
-                StorageService.saveDownloads(updated);
-                return updated;
-              });
-
-              delete next[id];
-            } else {
-              next[id] = {
-                ...task,
-                progress: newProgress,
-                downloadedBytes,
-                speedMbPerSec: speed,
-              };
-            }
-          }
-        }
-
-        return hasChanges ? next : prev;
+        const current = prev[episode.message_id];
+        if (!current || current.status !== 'downloading') return prev;
+        const totalBytes = update.totalBytes || current.totalBytes;
+        return {
+          ...prev,
+          [episode.message_id]: {
+            ...current,
+            progress: update.percent ?? 0,
+            downloadedBytes: update.loadedBytes,
+            totalBytes,
+            speedMbPerSec: update.bytesPerSecond / (1024 * 1024),
+            phase: update.phase,
+          },
+        };
       });
-    }, 500);
+    },
+    []
+  );
 
-    return () => clearInterval(interval);
-  }, [hasActiveDownloads]);
-
-  // Start Download
-  const handleStartDownload = useCallback(
+  const handleDownloadComplete = useCallback(
     (episode: Episode) => {
-      // The combined download button already fetched and saved the blob to
-      // both destinations before invoking this callback. This callback only
-      // records the completed download in the app state.
-      // Log activity
+      const id = episode.message_id;
+      setActiveDownloads((prev) => {
+        const current = prev[id];
+        if (!current) return prev;
+        const totalBytes = current?.totalBytes || 0;
+        const completedTask: DownloadTask = {
+          episode,
+          progress: 100,
+          downloadedBytes: totalBytes,
+          totalBytes,
+          status: 'completed',
+          speedMbPerSec: 0,
+        };
+        setSavedDownloads((saved) => {
+          const updated = [completedTask, ...saved.filter((savedTask) => savedTask.episode.message_id !== id)];
+          StorageService.saveDownloads(updated);
+          return updated;
+        });
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+      delete downloadCancelHandlersRef.current[id];
+
       if (currentUser?.uid) {
         ActivityService.logDownload(
           currentUser.uid,
@@ -517,38 +521,38 @@ export default function App() {
         ).catch(() => {});
       }
 
-      // 2. Display friendly floating notification
       setDownloadToast({
         title: episode.title,
         fileName: episode.file_name || 'Fichier média',
       });
-      setTimeout(() => {
-        setDownloadToast(null);
-      }, 5000);
-
-      // 3. Track active task in React state
-      setActiveDownloads((prev) => {
-        if (prev[episode.message_id]) return prev;
-        const totalBytes = (episode.size_mb || 400) * 1024 * 1024;
-        const newTask: DownloadTask = {
-          episode,
-          progress: 0,
-          downloadedBytes: 0,
-          totalBytes,
-          status: 'downloading',
-          speedMbPerSec: 7.2,
-        };
-        return {
-          ...prev,
-          [episode.message_id]: newTask,
-        };
-      });
+      setTimeout(() => setDownloadToast(null), 5000);
     },
-    [settings.backendUrl]
+    [currentUser]
   );
+
+  const handleDownloadError = useCallback((episode: Episode, error: Error) => {
+    setActiveDownloads((prev) => {
+      const current = prev[episode.message_id];
+      if (!current) return prev;
+      return {
+        ...prev,
+        [episode.message_id]: {
+          ...current,
+          status: 'error',
+          error: error.message,
+        },
+      };
+    });
+  }, []);
+
+  const handleDownloadFinished = useCallback((episode: Episode) => {
+    delete downloadCancelHandlersRef.current[episode.message_id];
+  }, []);
 
   // Cancel Download
   const handleCancelDownload = useCallback((messageId: number) => {
+    downloadCancelHandlersRef.current[messageId]?.();
+    delete downloadCancelHandlersRef.current[messageId];
     setActiveDownloads((prev) => {
       const next = { ...prev };
       delete next[messageId];
@@ -923,7 +927,12 @@ export default function App() {
             onRefresh={handleRefreshHome}
             onSearch={performSearch}
             onPlayEpisode={handlePlayOnline}
-            onDownloadEpisode={handleStartDownload}
+            onDownloadEpisode={handleDownloadComplete}
+            onDownloadStart={handleDownloadStart}
+            onDownloadProgress={handleDownloadProgress}
+            onDownloadComplete={handleDownloadComplete}
+            onDownloadError={handleDownloadError}
+            onDownloadFinished={handleDownloadFinished}
             activeDownloads={activeDownloads}
             savedDownloads={savedDownloads}
             errorMessage={errorMessage}

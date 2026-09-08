@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import type { DownloadProgressUpdate } from '../types';
 
 /**
  * Système de stockage hors-ligne universel basé sur OPFS
@@ -339,7 +340,8 @@ async function performSaveStream(
   mimeType: string,
   meta: OfflineSaveMeta,
   stream: ReadableStream<Uint8Array>,
-  totalBytes: number
+  totalBytes: number,
+  onProgress?: (progress: DownloadProgressUpdate) => void
 ): Promise<OfflineFileRecord> {
   emitProgress(id, 0);
   let dirHandle: FileSystemDirectoryHandle | null = null;
@@ -352,9 +354,19 @@ async function performSaveStream(
     const fileHandle = await dirHandle.getFileHandle(id, { create: true });
     writable = await fileHandle.createWritable();
 
+    const startedAt = typeof performance !== 'undefined' ? performance.now() : Date.now();
     const writtenBytes = await writeStreamInChunks(stream, writable, (loaded) => {
       const percent = totalBytes > 0 ? Math.min(99, Math.round((loaded / totalBytes) * 100)) : 0;
       emitProgress(id, percent);
+      const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      const elapsedSeconds = Math.max(0.001, (now - startedAt) / 1000);
+      onProgress?.({
+        phase: 'offline',
+        loadedBytes: loaded,
+        totalBytes,
+        percent: totalBytes > 0 ? Math.min(99, Math.round((loaded / totalBytes) * 100)) : null,
+        bytesPerSecond: loaded / elapsedSeconds,
+      });
     });
 
     await writable.close();
@@ -374,6 +386,13 @@ async function performSaveStream(
 
     upsertOfflineRecord(record);
     emitProgress(id, 100);
+    onProgress?.({
+      phase: 'offline',
+      loadedBytes: writtenBytes,
+      totalBytes: totalBytes || writtenBytes,
+      percent: 100,
+      bytesPerSecond: 0,
+    });
     return record;
   } catch (err) {
     if (writable) {
@@ -440,7 +459,8 @@ async function saveOfflineBlobCore(
   originalUrl: string,
   filename: string,
   mimeType: string,
-  meta: OfflineSaveMeta = {}
+  meta: OfflineSaveMeta = {},
+  onProgress?: (progress: DownloadProgressUpdate) => void
 ): Promise<OfflineFileRecord> {
   if (!isOfflineStorageSupported()) {
     throw new Error(OPFS_UNSUPPORTED_MESSAGE);
@@ -457,7 +477,8 @@ async function saveOfflineBlobCore(
     mimeType,
     meta,
     blob.stream(),
-    blob.size
+    blob.size,
+    onProgress
   );
   activeSaves.set(id, task);
   try {
@@ -595,9 +616,10 @@ export function useOfflineManager() {
       originalUrl: string,
       filename: string,
       mimeType: string,
-      meta?: OfflineSaveMeta
+      meta?: OfflineSaveMeta,
+      onProgress?: (progress: DownloadProgressUpdate) => void
     ): Promise<OfflineFileRecord> => {
-      const record = await saveOfflineBlobCore(blob, originalUrl, filename, mimeType, meta);
+      const record = await saveOfflineBlobCore(blob, originalUrl, filename, mimeType, meta, onProgress);
       refresh();
       refreshStorageUsage();
       return record;

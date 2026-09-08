@@ -19,7 +19,7 @@ import {
   ChevronRight,
   ShieldCheck,
 } from 'lucide-react';
-import { JikanAnimeData, JikanCharacterData, Episode } from '../types';
+import { JikanAnimeData, JikanCharacterData, Episode, DownloadProgressUpdate } from '../types';
 import { JikanService } from '../services/jikan';
 import { getInternalStorageDownloadUrl } from '../utils/download';
 import { sanitizeFileName } from '../utils/sanitizeTitle';
@@ -33,6 +33,11 @@ interface AnimeDetailsModalProps {
   onClose: () => void;
   onPlayEpisode?: (episode: Episode) => void;
   onDownloadEpisode?: (episode: Episode) => void;
+  onDownloadStart?: (episode: Episode, cancel: () => void) => void;
+  onDownloadProgress?: (episode: Episode, progress: DownloadProgressUpdate) => void;
+  onDownloadComplete?: (episode: Episode) => void;
+  onDownloadError?: (episode: Episode, error: Error) => void;
+  onDownloadFinished?: (episode: Episode) => void;
   onSearchInChannels?: (animeTitle: string) => void;
 }
 
@@ -44,6 +49,11 @@ export const AnimeDetailsModal: React.FC<AnimeDetailsModalProps> = ({
   onClose,
   onPlayEpisode,
   onDownloadEpisode,
+  onDownloadStart,
+  onDownloadProgress,
+  onDownloadComplete,
+  onDownloadError,
+  onDownloadFinished,
   onSearchInChannels,
 }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'characters' | 'trailer'>('overview');
@@ -221,7 +231,17 @@ export const AnimeDetailsModal: React.FC<AnimeDetailsModalProps> = ({
                 channelId={episode.channel}
                 messageId={episode.message_id}
                 variant="icon"
-                onCompleted={onDownloadEpisode ? () => onDownloadEpisode(episode) : undefined}
+                onStarted={(cancel) => onDownloadStart?.(episode, cancel)}
+                onProgress={(progress) => onDownloadProgress?.(episode, progress)}
+                onCompleted={() => {
+                  if (onDownloadComplete) {
+                    onDownloadComplete(episode);
+                  } else {
+                    onDownloadEpisode?.(episode);
+                  }
+                }}
+                onError={(error) => onDownloadError?.(episode, error)}
+                onFinished={() => onDownloadFinished?.(episode)}
               />
             </div>
           </div>

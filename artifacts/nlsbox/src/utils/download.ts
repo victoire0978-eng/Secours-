@@ -1,4 +1,5 @@
 import { Episode } from '../types';
+import type { DownloadProgressUpdate } from '../types';
 import { sanitizeFileName } from './sanitizeTitle';
 
 /**
@@ -138,9 +139,10 @@ export function triggerBlobDeviceDownload(blob: Blob, fileName: string): boolean
  */
 export async function fetchBlobWithProgress(
   url: string,
-  onProgress?: (percent: number | null) => void
+  onProgress?: (progress: DownloadProgressUpdate) => void,
+  signal?: AbortSignal
 ): Promise<{ blob: Blob; contentType: string }> {
-  const response = await fetch(url);
+  const response = await fetch(url, { signal });
   if (!response.ok) {
     throw new Error(`Téléchargement impossible (HTTP ${response.status})`);
   }
@@ -150,14 +152,27 @@ export async function fetchBlobWithProgress(
 
   if (!response.body) {
     const blob = await response.blob();
-    onProgress?.(100);
+    onProgress?.({
+      phase: 'network',
+      loadedBytes: blob.size,
+      totalBytes: blob.size,
+      percent: 100,
+      bytesPerSecond: 0,
+    });
     return { blob, contentType: contentType || blob.type };
   }
 
   const reader = response.body.getReader();
   const chunks: Uint8Array[] = [];
   let receivedBytes = 0;
-  onProgress?.(totalBytes > 0 ? 0 : null);
+  const startedAt = typeof performance !== 'undefined' ? performance.now() : Date.now();
+  onProgress?.({
+    phase: 'network',
+    loadedBytes: 0,
+    totalBytes,
+    percent: totalBytes > 0 ? 0 : null,
+    bytesPerSecond: 0,
+  });
 
   while (true) {
     const { done, value } = await reader.read();
@@ -165,13 +180,25 @@ export async function fetchBlobWithProgress(
     if (value && value.length > 0) {
       chunks.push(value);
       receivedBytes += value.length;
-      onProgress?.(
-        totalBytes > 0 ? Math.min(100, Math.round((receivedBytes / totalBytes) * 100)) : null
-      );
+      const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      const elapsedSeconds = Math.max(0.001, (now - startedAt) / 1000);
+      onProgress?.({
+        phase: 'network',
+        loadedBytes: receivedBytes,
+        totalBytes,
+        percent: totalBytes > 0 ? Math.min(100, Math.round((receivedBytes / totalBytes) * 100)) : null,
+        bytesPerSecond: receivedBytes / elapsedSeconds,
+      });
     }
   }
 
   const blob = new Blob(chunks as BlobPart[], { type: contentType || undefined });
-  onProgress?.(100);
+  onProgress?.({
+    phase: 'network',
+    loadedBytes: receivedBytes,
+    totalBytes: totalBytes || receivedBytes,
+    percent: 100,
+    bytesPerSecond: 0,
+  });
   return { blob, contentType: contentType || blob.type };
 }

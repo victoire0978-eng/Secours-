@@ -25,6 +25,12 @@ import { CombinedDownloadButton } from './CombinedDownloadButton';
 import { IOSActions } from './IOSActions';
 import { usePlatform } from '../hooks/usePlatform';
 
+const formatBytes = (bytes: number): string => {
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} Ko`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} Go`;
+};
+
 interface DownloadsScreenProps {
   activeDownloads: Record<number, DownloadTask>;
   savedDownloads: DownloadTask[];
@@ -112,8 +118,8 @@ export const DownloadsScreen: React.FC<DownloadsScreenProps> = ({
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-extrabold text-purple-300 font-mono">
-                          {task.progress.toFixed(1)}%
+                         <span className="text-xs font-extrabold text-purple-300 font-mono">
+                           {task.totalBytes > 0 ? `${task.progress.toFixed(1)}%` : 'Taille inconnue'}
                         </span>
                         <button
                           onClick={() => onCancelDownload(task.episode.message_id)}
@@ -126,21 +132,35 @@ export const DownloadsScreen: React.FC<DownloadsScreenProps> = ({
                     </div>
 
                     {/* Progress Bar */}
-                     <div className="mt-3 relative h-2 bg-[hsl(var(--background)/.72)] rounded-full overflow-hidden border border-[hsl(var(--border)/.65)]">
                       <div
-                         className="h-full bg-[hsl(var(--primary))] transition-all duration-200 rounded-full"
-                        style={{ width: `${task.progress}%` }}
-                      />
+                        className="mt-3 relative h-2 bg-[hsl(var(--background)/.72)] rounded-full overflow-hidden border border-[hsl(var(--border)/.65)]"
+                        role="progressbar"
+                        aria-label={task.totalBytes > 0 ? `Progression ${task.progress.toFixed(1)} %` : 'Progression indéterminée'}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-valuenow={task.totalBytes > 0 ? task.progress : undefined}
+                      >
+                       {task.totalBytes > 0 ? (
+                         <div
+                           className="h-full bg-[hsl(var(--primary))] transition-[width] duration-75 rounded-full"
+                           style={{ width: `${task.progress}%` }}
+                         />
+                       ) : (
+                         <div className="h-full w-1/4 bg-[hsl(var(--primary))] rounded-full animate-pulse" />
+                       )}
                     </div>
 
-                    {/* Meta info speed & received bytes */}
+                     {/* Meta info from the current real phase */}
                     <div className="mt-2 flex items-center justify-between text-[11px] text-gray-400">
                       <span className="flex items-center gap-1 font-mono text-purple-300/80">
                         <Zap className="w-3 h-3 text-purple-400" />
-                        {task.speedMbPerSec.toFixed(1)} Mo/s
+                         {task.speedMbPerSec > 0 ? `${task.speedMbPerSec.toFixed(1)} Mo/s` : '— Mo/s'}
                       </span>
-                      <span className="font-mono">
-                        {(task.downloadedBytes / (1024 * 1024)).toFixed(1)} / {task.episode.size_mb.toFixed(1)} Mo
+                       <span className="font-mono text-right">
+                         <span className="block text-purple-300/80">
+                           {task.phase === 'offline' ? 'Écriture hors-ligne' : 'Téléchargement réseau'}
+                         </span>
+                         {formatBytes(task.downloadedBytes)} / {task.totalBytes > 0 ? formatBytes(task.totalBytes) : 'taille inconnue'}
                       </span>
                     </div>
                   </div>

@@ -109,9 +109,18 @@ export interface DownloadTask {
   totalBytes: number;
   status: 'pending' | 'downloading' | 'completed' | 'paused' | 'error';
   speedMbPerSec: number;
+  phase?: 'network' | 'offline';
   localBlobUrl?: string;
   completedAt?: string;
   error?: string;
+}
+
+export interface DownloadProgressUpdate {
+  phase: 'network' | 'offline';
+  loadedBytes: number;
+  totalBytes: number;
+  percent: number | null;
+  bytesPerSecond: number;
 }
 
 export type HubCategory =

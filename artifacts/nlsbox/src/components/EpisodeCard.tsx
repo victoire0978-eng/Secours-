@@ -14,7 +14,7 @@ import {
   BookOpen,
   Image as ImageIcon,
 } from 'lucide-react';
-import { Episode, DownloadTask } from '../types';
+import { Episode, DownloadTask, DownloadProgressUpdate } from '../types';
 import { JikanService } from '../services/jikan';
 import { MediaClassifier } from '../utils/mediaClassifier';
 import { shareDirectMedia } from '../utils/shareMedia';
@@ -26,6 +26,11 @@ interface EpisodeCardProps {
   episode: Episode;
   onPlay: (episode: Episode) => void;
   onDownload: (episode: Episode) => void;
+  onDownloadStart?: (episode: Episode, cancel: () => void) => void;
+  onDownloadProgress?: (episode: Episode, progress: DownloadProgressUpdate) => void;
+  onDownloadComplete?: (episode: Episode) => void;
+  onDownloadError?: (episode: Episode, error: Error) => void;
+  onDownloadFinished?: (episode: Episode) => void;
   onOpenInfo?: (episode: Episode) => void;
   onShare?: (episode: Episode) => void;
   posterUrl?: string;
@@ -37,6 +42,9 @@ export const EpisodeCard: React.FC<EpisodeCardProps> = ({
   episode,
   onPlay,
   onDownload,
+  onDownloadStart,
+  onDownloadProgress,
+  onDownloadComplete,
   onOpenInfo,
   onShare,
   posterUrl: passedPoster,
@@ -346,7 +354,17 @@ export const EpisodeCard: React.FC<EpisodeCardProps> = ({
             channelId={episode.channel}
             messageId={episode.message_id}
             variant="icon"
-            onCompleted={() => onDownload(episode)}
+            onStarted={(cancel) => onDownloadStart?.(episode, cancel)}
+            onProgress={(progress) => onDownloadProgress?.(episode, progress)}
+            onCompleted={() => {
+              if (onDownloadComplete) {
+                onDownloadComplete(episode);
+              } else {
+                onDownload(episode);
+              }
+            }}
+            onError={(error) => onDownloadError?.(episode, error)}
+            onFinished={() => onDownloadFinished?.(episode)}
           />
         </div>
       </div>
